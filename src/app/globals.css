@@ -59,6 +59,11 @@
     font-family: var(--font-display);
     letter-spacing: -0.01em;
   }
+
+  /* Na tela com a foto da praia o rodapé cai sobre a água. */
+  body:has(#tela-praia) footer {
+    color: rgba(255, 255, 255, 0.8);
+  }
 }
 
 @utility cartao {
@@ -87,6 +92,15 @@
 
 @utility botao-suave {
   @apply inline-flex items-center justify-center gap-2 rounded-full border border-areia-300 bg-white px-5 py-3 text-base font-semibold text-oceano-800 transition hover:border-mar-300 hover:text-mar-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@utility botao-vidro {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-white/40 bg-white/15 px-5 py-3 text-base font-semibold text-white backdrop-blur-md transition hover:bg-white/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+/* Painel translúcido para o conteúdo que fica em cima da foto da praia. */
+@utility vidro {
+  @apply rounded-3xl border border-white/25 bg-oceano-900/35 p-5 text-white shadow-[0_18px_45px_-30px_rgba(8,37,46,0.95)] backdrop-blur-md;
 }
 
 @utility selo {

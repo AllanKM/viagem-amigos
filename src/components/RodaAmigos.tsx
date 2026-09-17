@@ -95,17 +95,17 @@ function Rosto({ pessoa }: { pessoa: PessoaRoda }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img src={pessoa.fotoUrl} alt={nomeCompleto} className={`${base} object-cover`} />
       ) : (
-        <span className={`${base} ${estilo.fundo} font-display text-[0.65rem] sm:text-sm`}>
+        <span className={`${base} ${estilo.fundo} font-display text-xs sm:text-lg`}>
           <span className="sr-only">{nomeCompleto}</span>
           <span aria-hidden>{iniciais(pessoa.nome, pessoa.sobrenome)}</span>
         </span>
       )}
       {pessoa.status === "CONFIRMADO" && (
         <span
-          className="absolute right-0 bottom-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-folha-500 text-white ring-2 ring-white"
+          className="absolute right-0 bottom-0 flex h-4 w-4 items-center justify-center rounded-full bg-folha-500 text-white ring-2 ring-white sm:h-5 sm:w-5"
           aria-hidden
         >
-          <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="3.5">
+          <svg viewBox="0 0 24 24" className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="none" stroke="currentColor" strokeWidth="3.5">
             <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </span>
@@ -137,7 +137,14 @@ function CasaNoCentro({ casa, rotulo }: { casa: CasaRoda | null; rotulo: string 
         <img src={casa.fotoUrl} alt={`Foto da ${casa.nome}`} className="h-full w-full object-cover" />
       ) : (
         <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-mar-500 via-mar-600 to-oceano-800 text-white">
-          <svg viewBox="0 0 24 24" className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden>
+          <svg
+            viewBox="0 0 24 24"
+            className="h-9 w-9 sm:h-12 sm:w-12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            aria-hidden
+          >
             <path d="M4 11.5 12 5l8 6.5" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M6 11v8h12v-8" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M10 19v-4.5h4V19" strokeLinecap="round" strokeLinejoin="round" />
@@ -154,7 +161,7 @@ function CasaNoCentro({ casa, rotulo }: { casa: CasaRoda | null; rotulo: string 
     >
       <Link href="/casas" title={casa ? casa.nome : "Ver as casas candidatas"} className="block">
         {conteudo}
-        <span className="absolute inset-x-0 -bottom-2 mx-auto w-fit rounded-full bg-oceano-900/85 px-2.5 py-1 text-center text-[0.6rem] font-semibold tracking-wide text-white uppercase ring-1 ring-white/30">
+        <span className="absolute inset-x-0 -bottom-2 mx-auto w-fit rounded-full bg-oceano-900/85 px-2.5 py-1 text-center text-[0.6rem] font-semibold tracking-wide text-white uppercase ring-1 ring-white/30 sm:text-xs">
           {rotulo}
         </span>
       </Link>
@@ -181,7 +188,7 @@ export function RodaAmigos({
   const aneis = montarAneis(montarVagas(pessoas, meta));
 
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[23rem] sm:max-w-[27rem]">
+    <div className="relative mx-auto aspect-square w-full max-w-[27rem] sm:max-w-[34rem] lg:max-w-[38rem]">
       {aneis.map((anel) => (
         <div
           key={`trilha-${anel.raio}`}
@@ -207,7 +214,7 @@ export function RodaAmigos({
             ) : vaga.tipo === "extras" ? (
               <Link
                 href="/presenca"
-                className="flex h-full w-full items-center justify-center rounded-full bg-white/85 font-display text-xs text-oceano-900 ring-2 ring-white sm:text-sm"
+                className="flex h-full w-full items-center justify-center rounded-full bg-white/85 font-display text-xs text-oceano-900 ring-2 ring-white sm:text-lg"
               >
                 +{vaga.quantidade}
               </Link>

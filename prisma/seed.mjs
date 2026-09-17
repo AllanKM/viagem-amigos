@@ -1,6 +1,15 @@
+import { PrismaLibSQL } from "@prisma/adapter-libsql";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// Mesma regra do app: com TURSO_DATABASE_URL semeia o banco na nuvem, senão o arquivo local.
+const prisma = process.env.TURSO_DATABASE_URL
+  ? new PrismaClient({
+      adapter: new PrismaLibSQL({
+        url: process.env.TURSO_DATABASE_URL,
+        authToken: process.env.TURSO_AUTH_TOKEN,
+      }),
+    })
+  : new PrismaClient();
 
 const data = (iso) => new Date(`${iso}T12:00:00-03:00`);
 

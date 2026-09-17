@@ -4,9 +4,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// O Prisma CLI sempre trabalha no arquivo local. Em produção o app conecta no Turso
+// pelo adaptador libSQL (ver src/lib/prisma.ts), que ignora esta url.
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL")
+  url      = "file:./dev.db"
 }
 
 /// Configuração geral da viagem. Sempre existe uma única linha (id = 1).
@@ -63,7 +65,11 @@ model Amigo {
   id                String    @id @default(cuid())
   nome              String
   sobrenome         String    @default("")
+  /// Endereço para exibir a foto: /api/foto/<id> quando a imagem está no banco.
   fotoUrl           String?
+  /// A imagem em si fica no banco, já reduzida no celular de quem enviou.
+  fotoDados         Bytes?
+  fotoTipo          String?
   whatsapp          String    @default("")
   nucleo            Nucleo?   @relation(fields: [nucleoId], references: [id], onDelete: SetNull)
   nucleoId          String?

@@ -4,25 +4,75 @@ Ferramenta web para organizar a viagem do grupo (20 a 24 pessoas) para Búzios e
 confirmação de presença, votação da casa, rateio transparente e controle de pagamentos. Feita para ser
 usada pelo celular, em português.
 
-## Como rodar
+Repositório: <https://github.com/AllanKM/viagem-amigos>
+
+## Como rodar no computador
 
 ```bash
 npm install
-npm run preparar   # cria o banco SQLite e carrega os dados iniciais
+copy .env.example .env   # no macOS ou Linux: cp .env.example .env
+npm run preparar         # cria o banco SQLite local e carrega os dados iniciais
 npm run dev
 ```
 
 Abra o endereço que aparecer no terminal (normalmente <http://localhost:3000>).
 
-O arquivo `.env` guarda três valores:
+Variáveis do `.env`:
 
 | Variável | Para que serve |
 | --- | --- |
-| `DATABASE_URL` | Caminho do banco SQLite (`prisma/dev.db`) |
 | `ORGANIZADOR_PIN` | PIN que libera o painel do organizador (padrão: `buzios2026`) |
 | `APP_SECRET` | Segredo do cookie de sessão do organizador |
+| `TURSO_DATABASE_URL` | Banco na nuvem. **Vazio no computador**: aí o app usa `prisma/dev.db` |
+| `TURSO_AUTH_TOKEN` | Token do banco na nuvem |
 
 Troque o PIN e o segredo antes de compartilhar o link com o grupo.
+
+## Publicar na Vercel
+
+A Vercel é serverless: não guarda arquivos gravados durante o uso. Por isso o banco fica no
+[Turso](https://turso.tech) (que é SQLite na nuvem, o mesmo banco do desenvolvimento) e as fotos dos
+amigos ficam dentro do próprio banco, servidas pela rota `/api/foto/<id>`.
+
+### 1. Criar o banco no Turso
+
+No painel do Turso (<https://turso.tech>), crie um banco e copie os dois valores:
+
+- **URL** do banco, no formato `libsql://nome-do-banco-usuario.turso.io`
+- **Token** de acesso
+
+Coloque os dois no `.env` local, em `TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN`.
+
+### 2. Criar as tabelas e carregar os dados
+
+```bash
+npm run turso:aplicar   # cria as tabelas no Turso (pode rodar de novo à vontade)
+npm run banco:semear    # carrega viagem, datas e as casas candidatas
+```
+
+O `turso:aplicar` usa o cliente libSQL em vez da CLI do Turso, então funciona no Windows sem WSL. Ele
+registra o que já aplicou na tabela `_migracoes_aplicadas`, então é seguro repetir.
+
+### 3. Criar o projeto na Vercel
+
+Importe o repositório em <https://vercel.com/new> (o Next.js é detectado sozinho) e cadastre estas quatro
+variáveis de ambiente:
+
+| Variável | Valor |
+| --- | --- |
+| `TURSO_DATABASE_URL` | a URL `libsql://...` do seu banco |
+| `TURSO_AUTH_TOKEN` | o token do banco |
+| `ORGANIZADOR_PIN` | o PIN que você vai usar |
+| `APP_SECRET` | um valor aleatório e longo |
+
+Depois é só fazer o deploy. Cada `git push` na branch `main` publica uma nova versão.
+
+### Mudanças de estrutura no banco depois de publicado
+
+```bash
+npm run banco:migrar    # cria a migração no banco local
+npm run turso:aplicar   # aplica a mesma migração no Turso
+```
 
 ## Primeiros passos do organizador
 
@@ -40,7 +90,7 @@ Entre em `/organizador`, digite o PIN e faça nesta ordem:
 
 1. Abre o link e toca em **Confirmar presença**.
 2. Clica na própria foto na grade (a borda mostra quem já respondeu).
-3. Envia a própria foto pelo celular — a imagem é reduzida no aparelho antes do envio.
+3. Envia a própria foto pelo celular — a imagem é recortada e reduzida no aparelho antes do envio.
 4. Responde: confirmado, talvez ou não vou; escolhe a data preferida; adiciona cônjuge, filhos e
    acompanhantes com idade; escreve observações (berço, mobilidade, quarto, alergias) e marca o aceite do
    sinal.
@@ -78,10 +128,10 @@ outras estão marcadas como "preço a confirmar" e precisam de checagem no anún
 
 ## Onde ficam os dados
 
-- Banco: `prisma/dev.db` (SQLite). Para fazer backup, copie esse arquivo.
-- Fotos: `public/uploads/`.
+- **No computador**: tudo em `prisma/dev.db`. Para fazer backup, copie esse arquivo.
+- **Publicado**: tudo no banco do Turso, incluindo as fotos (coluna `fotoDados` da tabela `Amigo`).
 
-Nenhum dos dois vai para o Git.
+O `.env` e o banco local não vão para o Git.
 
 ## Comandos úteis
 
@@ -90,8 +140,12 @@ Nenhum dos dois vai para o Git.
 | `npm run dev` | Sobe o site em modo desenvolvimento |
 | `npm run build` e `npm start` | Versão de produção |
 | `npm run banco:estudio` | Abre o Prisma Studio para editar o banco na mão |
-| `npm run banco:migrar` | Aplica mudanças de estrutura no banco |
-| `npm run banco:semear` | Recarrega os dados iniciais |
+| `npm run banco:migrar` | Cria e aplica uma migração no banco local |
+| `npm run banco:semear` | Carrega os dados iniciais (no Turso, se o `.env` estiver preenchido) |
+| `npm run turso:aplicar` | Aplica as migrações no banco do Turso |
+| `npm run lint` | Confere o padrão do código |
 
-Para o grupo acessar de fora, publique em um servidor com disco persistente (o SQLite e as fotos são
-arquivos em disco).
+## Como foi construído
+
+Next.js 16 (App Router e Server Actions), React 19, Tailwind CSS 4, Prisma 6 com SQLite e o adaptador
+libSQL para o Turso. Não há bibliotecas de interface: os componentes e o tema praiano foram escritos à mão.

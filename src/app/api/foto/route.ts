@@ -1,6 +1,3 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
-
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
@@ -39,20 +36,23 @@ export async function POST(request: Request) {
     );
   }
 
-  const extensao = arquivo.type === "image/png" ? "png" : arquivo.type === "image/webp" ? "webp" : "jpg";
-  const nomeArquivo = `${amigoId}-${Date.now()}.${extensao}`;
-  const pasta = path.join(process.cwd(), "public", "uploads");
-
-  await mkdir(pasta, { recursive: true });
-  await writeFile(path.join(pasta, nomeArquivo), Buffer.from(await arquivo.arrayBuffer()));
-
-  const fotoUrl = `/uploads/${nomeArquivo}`;
-  await prisma.amigo.update({ where: { id: amigoId }, data: { fotoUrl } });
+  // A imagem fica no próprio banco: assim funciona igual no computador e na Vercel,
+  // que não guarda arquivos gravados em tempo de execução.
+  const fotoUrl = `/api/foto/${amigoId}?v=${Date.now()}`;
+  await prisma.amigo.update({
+    where: { id: amigoId },
+    data: {
+      fotoDados: Buffer.from(await arquivo.arrayBuffer()),
+      fotoTipo: arquivo.type,
+      fotoUrl,
+    },
+  });
 
   revalidatePath("/");
   revalidatePath("/presenca");
   revalidatePath(`/presenca/${amigoId}`);
   revalidatePath("/casas");
+  revalidatePath("/organizador");
 
   return NextResponse.json({ ok: true, fotoUrl });
 }

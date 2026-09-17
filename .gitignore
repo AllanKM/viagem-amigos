@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -40,11 +41,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# log do servidor de desenvolvimento
-/.next-dev.log
+# logs do servidor de desenvolvimento
+/.next-dev*.log
+/dev.log
 
-# banco local e fotos enviadas pelo grupo
+# banco local de desenvolvimento (as fotos ficam dentro dele)
 /prisma/*.db
 /prisma/*.db-journal
-/public/uploads/*
-!/public/uploads/.gitkeep

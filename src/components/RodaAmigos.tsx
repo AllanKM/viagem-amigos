@@ -51,14 +51,18 @@ function montarVagas(pessoas: PessoaRoda[], meta: number): Vaga[] {
 /** Meio passo de giro nos anéis pares deixa a base livre para o rótulo da casa. */
 const giroDoAnel = (quantidade: number) => (quantidade % 2 === 0 ? 0.5 : 0);
 
-/** Divide as vagas em um ou dois anéis, com raio e tamanho em % do lado do quadro. */
+/**
+ * Divide as vagas em um ou dois anéis, com raio e tamanho em % do lado do quadro.
+ * Os raios deixam uma folga abaixo de cada rosto para o nome caber sem encostar
+ * no rosto de baixo.
+ */
 function distribuir(total: number) {
-  if (total <= 14) return [{ quantidade: total, raio: 40, tamanho: 15, giro: giroDoAnel(total) }];
+  if (total <= 14) return [{ quantidade: total, raio: 37, tamanho: 14, giro: giroDoAnel(total) }];
   const externo = Math.ceil(total * 0.62);
   const interno = total - externo;
   return [
-    { quantidade: externo, raio: 43, tamanho: 12.5, giro: giroDoAnel(externo) },
-    { quantidade: interno, raio: 26.5, tamanho: 11.5, giro: giroDoAnel(interno) },
+    { quantidade: externo, raio: 41, tamanho: 12, giro: giroDoAnel(externo) },
+    { quantidade: interno, raio: 22, tamanho: 11, giro: giroDoAnel(interno) },
   ];
 }
 
@@ -75,12 +79,16 @@ function montarAneis(vagas: Vaga[]) {
 function posicao(indice: number, quantidade: number, raio: number, giro: number) {
   const angulo = ((indice + giro) / quantidade) * Math.PI * 2 - Math.PI / 2;
   return {
-    left: `${50 + raio * Math.cos(angulo)}%`,
-    top: `${50 + raio * Math.sin(angulo)}%`,
+    lugar: {
+      left: `${50 + raio * Math.cos(angulo)}%`,
+      top: `${50 + raio * Math.sin(angulo)}%`,
+    },
+    // Na metade de cima o nome vai acima do rosto: para baixo ele cairia sobre a casa.
+    nomeAcima: Math.sin(angulo) < 0,
   };
 }
 
-function Rosto({ pessoa }: { pessoa: PessoaRoda }) {
+function Rosto({ pessoa, nomeAcima }: { pessoa: PessoaRoda; nomeAcima: boolean }) {
   const estilo = ESTILO[pessoa.status] ?? ESTILO.PENDENTE;
   const nomeCompleto = `${pessoa.nome} ${pessoa.sobrenome}`.trim();
   const base = `flex h-full w-full items-center justify-center rounded-full ${estilo.anel} shadow-[0_8px_18px_-10px_rgba(8,37,46,0.9)]`;
@@ -110,6 +118,14 @@ function Rosto({ pessoa }: { pessoa: PessoaRoda }) {
           </svg>
         </span>
       )}
+      <span
+        className={`absolute left-1/2 w-[145%] -translate-x-1/2 truncate rounded-md bg-oceano-900/60 px-1 py-0.5 text-center text-[0.5rem] leading-tight font-semibold text-white backdrop-blur-[1px] sm:text-[0.68rem] ${
+          nomeAcima ? "bottom-full mb-1" : "top-full mt-1"
+        }`}
+        aria-hidden
+      >
+        {nomeCompleto}
+      </span>
     </Link>
   );
 }
@@ -157,7 +173,7 @@ function CasaNoCentro({ casa, rotulo }: { casa: CasaRoda | null; rotulo: string 
   return (
     <div
       className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-      style={{ width: "33%" }}
+      style={{ width: "29%" }}
     >
       <Link href="/casas" title={casa ? casa.nome : "Ver as casas candidatas"} className="block">
         {conteudo}
@@ -199,18 +215,20 @@ export function RodaAmigos({
       ))}
 
       {aneis.flatMap((anel) =>
-        anel.vagas.map((vaga, indice) => (
+        anel.vagas.map((vaga, indice) => {
+          const { lugar, nomeAcima } = posicao(indice, anel.quantidade, anel.raio, anel.giro);
+          return (
           <div
             key={vaga.chave}
             className="absolute -translate-x-1/2 -translate-y-1/2"
             style={{
-              ...posicao(indice, anel.quantidade, anel.raio, anel.giro),
+              ...lugar,
               width: `${anel.tamanho}%`,
               height: `${anel.tamanho}%`,
             }}
           >
             {vaga.tipo === "pessoa" ? (
-              <Rosto pessoa={vaga.pessoa} />
+              <Rosto pessoa={vaga.pessoa} nomeAcima={nomeAcima} />
             ) : vaga.tipo === "extras" ? (
               <Link
                 href="/presenca"
@@ -222,7 +240,8 @@ export function RodaAmigos({
               <VagaLivre />
             )}
           </div>
-        )),
+          );
+        }),
       )}
 
       <CasaNoCentro casa={casa} rotulo={rotuloCasa} />

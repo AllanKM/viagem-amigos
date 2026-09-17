@@ -1,6 +1,11 @@
 import type { Casa, OpcaoData } from "@prisma/client";
 
-import { alternarDisponibilidadeCasa, excluirCasa, salvarCasa } from "@/actions/organizador";
+import {
+  alternarDisponibilidadeCasa,
+  atualizarPrevias,
+  excluirCasa,
+  salvarCasa,
+} from "@/actions/organizador";
 import { BotaoAcao } from "@/components/BotaoAcao";
 import { FormAcao } from "@/components/FormAcao";
 import { pluralizar, reais } from "@/lib/formato";
@@ -179,10 +184,17 @@ export function SecaoCasas({
 }) {
   return (
     <section className="cartao">
-      <h2 className="font-display text-xl">Casas candidatas</h2>
-      <p className="mt-1 text-sm text-oceano-800/75">
-        Somente você inclui, edita, remove ou marca casas como indisponíveis.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl">Casas candidatas</h2>
+          <p className="mt-1 text-sm text-oceano-800/75">
+            Somente você inclui, edita, remove ou marca casas como indisponíveis.
+          </p>
+        </div>
+        <form action={atualizarPrevias}>
+          <BotaoAcao className="botao-suave px-4 py-2 text-sm">Atualizar prévias dos anúncios</BotaoAcao>
+        </form>
+      </div>
 
       <ul className="mt-3 space-y-2">
         {casas.map((casa) => (

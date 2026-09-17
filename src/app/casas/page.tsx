@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { Avatar } from "@/components/Avatar";
 import { FormularioVoto } from "@/components/FormularioVoto";
+import { EsqueletoPrevia, PreviaAnuncio } from "@/components/PreviaAnuncio";
 import { estimativaPorAdulto, obterAmigos, obterCasas, obterViagem, resumirPresenca } from "@/lib/dados";
 import { dataLonga, pluralizar, reais, textoPrazo } from "@/lib/formato";
 import { montarPessoas } from "@/lib/rateio";
@@ -18,23 +20,6 @@ function Dado({ rotulo, valor }: { rotulo: string; valor: string }) {
     <div className="rounded-xl bg-areia-100/80 px-3 py-2">
       <p className="text-[11px] text-oceano-800/60">{rotulo}</p>
       <p className="text-sm font-semibold text-oceano-900">{valor}</p>
-    </div>
-  );
-}
-
-function FotoCasa({ fotoUrl, nome }: { fotoUrl: string; nome: string }) {
-  if (fotoUrl) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={fotoUrl} alt={`Foto da ${nome}`} className="h-48 w-full object-cover sm:h-56" />
-    );
-  }
-
-  return (
-    <div className="flex h-32 w-full items-end justify-center bg-gradient-to-br from-mar-300 via-mar-500 to-oceano-700 sm:h-40">
-      <svg viewBox="0 0 1200 60" className="h-8 w-full text-white/80" preserveAspectRatio="none" aria-hidden>
-        <path d="M0 40c150-26 300 26 450 0s300-26 450 0 200 22 300 4v16H0z" fill="currentColor" />
-      </svg>
     </div>
   );
 }
@@ -120,7 +105,9 @@ export default async function PaginaCasas() {
               }`}
             >
               <div className="relative">
-                <FotoCasa fotoUrl={casa.fotoUrl} nome={casa.nome} />
+                <Suspense fallback={<EsqueletoPrevia />}>
+                  <PreviaAnuncio casa={casa} />
+                </Suspense>
                 <div className="absolute top-3 left-3 flex flex-wrap gap-2">
                   {escolhida && <span className="selo bg-folha-500 text-white">Casa escolhida</span>}
                   {casa.indisponivel && <span className="selo bg-oceano-900/80 text-white">Indisponível</span>}
@@ -142,16 +129,6 @@ export default async function PaginaCasas() {
                     {casa.distanciaPraia ? ` · ${casa.distanciaPraia}` : ""}
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
-                    {casa.link && (
-                      <a
-                        href={casa.link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-semibold text-mar-700 underline decoration-dotted"
-                      >
-                        Ver o anúncio
-                      </a>
-                    )}
                     {casa.notaAirbnb && (
                       <span className="text-oceano-800/75">
                         ★ {casa.notaAirbnb.toFixed(2)}

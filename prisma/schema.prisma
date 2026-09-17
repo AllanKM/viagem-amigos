@@ -120,6 +120,12 @@ model Casa {
   regras           String     @default("")
   notaAirbnb       Float?
   avaliacoes       Int?
+  /// Prévia do anúncio (Open Graph do link), buscada e guardada para não pesar a página.
+  previaTitulo     String     @default("")
+  previaResumo     String     @default("")
+  previaImagem     String     @default("")
+  previaNota       Float?
+  previaBuscadaEm  DateTime?
   alerta           String     @default("") // observação destacada no cartão
   indisponivel     Boolean    @default(false)
   motivoIndisponivel String   @default("")

@@ -59,9 +59,12 @@ export function textoPrazo(prazo: Date | string) {
 export function iniciais(nome: string, sobrenome = "") {
   // Só letras: apelidos entre parênteses e pontuação não viram inicial.
   const palavras = `${nome} ${sobrenome}`.match(/\p{L}+/gu) ?? [];
-  const primeira = palavras[0]?.charAt(0) ?? "";
-  const segunda = palavras[1]?.charAt(0) ?? "";
-  return `${primeira}${segunda}`.toUpperCase() || "?";
+  if (palavras.length === 0) return "?";
+  // Quem está na lista só com o primeiro nome fica mais reconhecível com duas letras.
+  const primeira = palavras[0] ?? "";
+  const segunda = palavras[1];
+  const par = segunda ? primeira.charAt(0) + segunda.charAt(0) : primeira.slice(0, 2);
+  return par.toUpperCase() || "?";
 }
 
 export function primeiroNome(nome: string) {

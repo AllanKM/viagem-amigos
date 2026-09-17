@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { obterViagem } from "@/lib/dados";
+import { buscarPrevia } from "@/lib/previa";
 import { prisma } from "@/lib/prisma";
 import {
   abrirSessaoOrganizador,
@@ -159,6 +160,38 @@ export async function definirCasaEscolhida(formData: FormData) {
   await exigirOrganizador();
   const id = texto(formData, "id");
   await prisma.viagem.update({ where: { id: 1 }, data: { casaEscolhidaId: id || null } });
+  revalidarTudo();
+}
+
+/** Rebusca a prévia (foto, título e nota) de todos os anúncios cadastrados. */
+export async function atualizarPrevias() {
+  await exigirOrganizador();
+
+  const casas = await prisma.casa.findMany({
+    where: { NOT: { link: "" } },
+    select: { id: true, link: true },
+  });
+
+  await Promise.all(
+    casas.map(async (casa) => {
+      const previa = await buscarPrevia(casa.link).catch(() => null);
+      await prisma.casa.update({
+        where: { id: casa.id },
+        data: {
+          previaBuscadaEm: new Date(),
+          ...(previa
+            ? {
+                previaTitulo: previa.titulo,
+                previaResumo: previa.resumo,
+                previaImagem: previa.imagem,
+                previaNota: previa.nota,
+              }
+            : {}),
+        },
+      });
+    }),
+  );
+
   revalidarTudo();
 }
 

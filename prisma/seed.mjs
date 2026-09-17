@@ -213,22 +213,69 @@ async function main() {
     });
   }
 
-  if ((await prisma.amigo.count()) === 0) {
+  await semearFamilia();
+}
+
+/**
+ * Lista oficial da família, agrupada por núcleo (é por núcleo que o rateio e os
+ * pagamentos são cobrados). Quem tem `crianca: true` entra como criança e paga
+ * meia cota enquanto a idade não for informada na confirmação de presença.
+ */
+const FAMILIA = [
+  {
+    nucleo: "Família Allan",
+    pessoas: [{ nome: "Allan", organizador: true }, { nome: "Paula" }, { nome: "Catarina", crianca: true }],
+  },
+  { nucleo: "Família Allane", pessoas: [{ nome: "Allane" }, { nome: "Henrique" }] },
+  {
+    nucleo: "Família Carol",
+    pessoas: [{ nome: "Carol" }, { nome: "Giovana", crianca: true }, { nome: "Davi", crianca: true }],
+  },
+  {
+    nucleo: "Família Danielle",
+    pessoas: [{ nome: "Danielle" }, { nome: "Bernardo", crianca: true }, { nome: "Bellinha" }],
+  },
+  { nucleo: "Família Victor", pessoas: [{ nome: "Victor" }, { nome: "Vera" }] },
+  { nucleo: "Família Darci", pessoas: [{ nome: "Darci" }, { nome: "Rosy" }] },
+  { nucleo: "Tia Fátima", pessoas: [{ nome: "Tia Fátima" }] },
+  {
+    nucleo: "Família Marquinhos",
+    pessoas: [
+      { nome: "Marquinhos" },
+      { nome: "Rejane" },
+      { nome: "Raffinha", crianca: true },
+      { nome: "Manu", crianca: true },
+    ],
+  },
+];
+
+async function semearFamilia() {
+  let ordemNucleo = 0;
+  let ordemPessoa = 0;
+
+  for (const grupo of FAMILIA) {
+    ordemNucleo += 1;
     const nucleo = await prisma.nucleo.upsert({
-      where: { nome: "Família Allan" },
-      update: {},
-      create: { nome: "Família Allan", ordem: 1 },
+      where: { nome: grupo.nucleo },
+      update: { ordem: ordemNucleo },
+      create: { nome: grupo.nucleo, ordem: ordemNucleo },
     });
 
-    await prisma.amigo.create({
-      data: {
-        nome: "Allan",
-        sobrenome: "(organizador)",
+    for (const pessoa of grupo.pessoas) {
+      ordemPessoa += 1;
+      // Só o que define a lista oficial: resposta, foto e idade seguem do participante.
+      const dados = {
         nucleoId: nucleo.id,
-        organizador: true,
-        ordem: 1,
-      },
-    });
+        organizador: pessoa.organizador === true,
+        adulto: pessoa.crianca !== true,
+        naLista: true,
+        ordem: ordemPessoa,
+      };
+
+      const existente = await prisma.amigo.findFirst({ where: { nome: pessoa.nome, naLista: true } });
+      if (existente) await prisma.amigo.update({ where: { id: existente.id }, data: dados });
+      else await prisma.amigo.create({ data: { nome: pessoa.nome, sobrenome: "", ...dados } });
+    }
   }
 }
 

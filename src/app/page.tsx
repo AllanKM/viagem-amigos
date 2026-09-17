@@ -103,6 +103,8 @@ export default async function PaginaInicial() {
       status: amigo.status,
     }));
 
+  // A foto da casa vem da prévia do anúncio quando o organizador não cadastrou uma.
+  const fotoDaCasa = casa ? casa.fotoUrl || casa.previaImagem : "";
   const valorPorAdulto = rateio.valorPorCota;
   const acimaDoOrcamento = casa ? casa.valorTotal > viagem.orcamentoMaximo : false;
   const capacidadeInsuficiente = casa ? casa.capacidade > 0 && casa.capacidade < resumo.confirmados : false;
@@ -148,7 +150,7 @@ export default async function PaginaInicial() {
         <RodaAmigos
           pessoas={naRoda}
           meta={viagem.metaPessoas}
-          casa={casa ? { nome: casa.nome, regiao: casa.regiao, fotoUrl: casa.fotoUrl } : null}
+          casa={casa ? { nome: casa.nome, regiao: casa.regiao, fotoUrl: fotoDaCasa } : null}
           rotuloCasa={ROTULO_CASA[origemCasa]}
         />
 
@@ -228,10 +230,10 @@ export default async function PaginaInicial() {
           <section className="vidro overflow-hidden p-0">
             <div className="flex flex-col sm:flex-row">
               <div className="relative h-40 w-full shrink-0 sm:h-auto sm:w-56">
-                {casa.fotoUrl ? (
+                {fotoDaCasa ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={casa.fotoUrl}
+                    src={fotoDaCasa}
                     alt={`Foto da ${casa.nome}`}
                     className="h-full w-full object-cover"
                   />

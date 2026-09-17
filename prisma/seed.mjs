@@ -224,12 +224,21 @@ async function main() {
 const FAMILIA = [
   {
     nucleo: "Família Allan",
-    pessoas: [{ nome: "Allan", organizador: true }, { nome: "Paula" }, { nome: "Catarina", crianca: true }],
+    pessoas: [
+      { nome: "Allan", organizador: true },
+      { nome: "Paula" },
+      { nome: "Catarina", crianca: true },
+      { nome: "Allane" },
+    ],
   },
-  { nucleo: "Família Allane", pessoas: [{ nome: "Allane" }, { nome: "Henrique" }] },
   {
     nucleo: "Família Carol",
-    pessoas: [{ nome: "Carol" }, { nome: "Giovana", crianca: true }, { nome: "Davi", crianca: true }],
+    pessoas: [
+      { nome: "Carol" },
+      { nome: "Henrique" },
+      { nome: "Giovana", crianca: true },
+      { nome: "Davi", crianca: true },
+    ],
   },
   {
     nucleo: "Família Danielle",
@@ -276,6 +285,21 @@ async function semearFamilia() {
       if (existente) await prisma.amigo.update({ where: { id: existente.id }, data: dados });
       else await prisma.amigo.create({ data: { nome: pessoa.nome, sobrenome: "", ...dados } });
     }
+  }
+
+  await limparNucleosVazios();
+}
+
+/** Quando alguém troca de núcleo, o antigo pode ficar sem ninguém: some da lista. */
+async function limparNucleosVazios() {
+  const vazios = await prisma.nucleo.findMany({
+    where: { amigos: { none: {} }, pagamentos: { none: {} } },
+    select: { id: true, nome: true },
+  });
+
+  for (const nucleo of vazios) {
+    await prisma.nucleo.delete({ where: { id: nucleo.id } });
+    console.log(`Núcleo sem gente removido: ${nucleo.nome}`);
   }
 }
 

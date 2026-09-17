@@ -3,6 +3,7 @@ import Link from "next/link";
 import { euSou, naoSouEu } from "@/actions/presenca";
 import { Avatar } from "@/components/Avatar";
 import { BarraProgresso } from "@/components/BarraProgresso";
+import { FundoPraia, OndaBranca } from "@/components/FundoPraia";
 import { SeloStatus } from "@/components/SeloStatus";
 import { obterAmigos, obterNucleos, obterViagem, resumirPresenca } from "@/lib/dados";
 import { dataLonga, pluralizar, primeiroNome, textoPrazo } from "@/lib/formato";
@@ -29,33 +30,38 @@ export default async function PaginaPresenca() {
 
   return (
     <div className="space-y-5">
-      <section className="cartao">
-        <h1 className="font-display text-2xl">Confirmação de presença</h1>
-        <p className="mt-1 text-sm text-oceano-800/75">
-          Clique na sua foto para responder. Você pode confirmar de uma vez todo o seu núcleo: cônjuge,
-          filhos e quem mais vier com você.
-        </p>
-        <p className="mt-2 text-sm font-medium text-coral-600">
-          Prazo para responder: {dataLonga(viagem.prazoConfirmacao)} ({textoPrazo(viagem.prazoConfirmacao)}).
-        </p>
+      <section className="overflow-hidden rounded-3xl border border-white/50 shadow-[0_22px_55px_-38px_rgba(8,37,46,0.9)]">
+        <FundoPraia className="px-5 pt-6 pb-5">
+          <h1 className="font-display text-2xl text-white drop-shadow-[0_3px_12px_rgba(8,37,46,0.55)]">
+            Confirmação de presença
+          </h1>
+          <p className="mt-1 max-w-xl text-sm text-white/85">
+            Clique na sua foto para responder. Você pode confirmar de uma vez todo o seu núcleo: cônjuge,
+            filhos e quem mais vier com você.
+          </p>
+          <p className="mt-2 text-sm font-semibold text-sol-100">
+            Prazo para responder: {dataLonga(viagem.prazoConfirmacao)} ({textoPrazo(viagem.prazoConfirmacao)}).
+          </p>
+          <OndaBranca className="-mx-5 -mb-5 mt-5 h-5 text-white/90" />
+        </FundoPraia>
 
-        <div className="mt-4">
+        <div className="bg-white/90 px-5 py-5 backdrop-blur">
           <BarraProgresso valor={resumo.confirmados} meta={viagem.metaPessoas} talvez={resumo.talvez} />
-        </div>
 
-        <dl className="mt-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-          {[
-            { rotulo: "Confirmados", valor: resumo.confirmados },
-            { rotulo: "Talvez", valor: resumo.talvez },
-            { rotulo: "Não vão", valor: resumo.naoVao },
-            { rotulo: "Sem resposta", valor: resumo.pendentes },
-          ].map((item) => (
-            <div key={item.rotulo} className="rounded-2xl bg-areia-100/80 px-3 py-2">
-              <dt className="text-xs text-oceano-800/65">{item.rotulo}</dt>
-              <dd className="font-display text-lg text-oceano-900">{item.valor}</dd>
-            </div>
-          ))}
-        </dl>
+          <dl className="mt-4 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+            {[
+              { rotulo: "Confirmados", valor: resumo.confirmados },
+              { rotulo: "Talvez", valor: resumo.talvez },
+              { rotulo: "Não vão", valor: resumo.naoVao },
+              { rotulo: "Sem resposta", valor: resumo.pendentes },
+            ].map((item) => (
+              <div key={item.rotulo} className="rounded-2xl bg-areia-100/80 px-3 py-2">
+                <dt className="text-xs text-oceano-800/65">{item.rotulo}</dt>
+                <dd className="font-display text-lg text-oceano-900">{item.valor}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </section>
 
       {eu && (

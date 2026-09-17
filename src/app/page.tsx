@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { Avatar } from "@/components/Avatar";
 import { BarraProgresso } from "@/components/BarraProgresso";
+import { FundoPraia, OndaBranca } from "@/components/FundoPraia";
+import { RodaAmigos } from "@/components/RodaAmigos";
 import {
   obterAmigos,
   obterDatas,
@@ -9,7 +11,13 @@ import {
   obterRateioAtual,
   resumirPresenca,
 } from "@/lib/dados";
-import { dataCurta, dataLonga, pluralizar, reais, reaisCurto, textoPrazo } from "@/lib/formato";
+import { dataCurta, dataLonga, pluralizar, primeiroNome, reais, reaisCurto, textoPrazo } from "@/lib/formato";
+
+const ROTULO_CASA = {
+  ESCOLHIDA: "Casa escolhida",
+  LIDER_VOTACAO: "Líder da votação",
+  SEM_CASA: "Casa a definir",
+} as const;
 
 function Aviso({
   tom,
@@ -52,6 +60,15 @@ function Numero({
   );
 }
 
+function Legenda({ cor, children }: { cor: string; children: React.ReactNode }) {
+  return (
+    <span className="flex items-center gap-1.5 rounded-full bg-white/15 px-2.5 py-1 ring-1 ring-white/25">
+      <span className={`h-2 w-2 rounded-full ${cor}`} aria-hidden />
+      {children}
+    </span>
+  );
+}
+
 export default async function PaginaInicial() {
   const [{ viagem, rateio, casa, origemCasa }, amigos, datas] = await Promise.all([
     obterRateioAtual(),
@@ -64,6 +81,24 @@ export default async function PaginaInicial() {
   const confirmados = amigos.filter((amigo) => amigo.status === "CONFIRMADO");
   const datasAtivas = datas.filter((data) => data.ativa);
 
+  // Na roda entram primeiro os confirmados, depois os "talvez" e por fim quem ainda não respondeu.
+  const ordemStatus = { CONFIRMADO: 0, TALVEZ: 1, PENDENTE: 2 } as Record<string, number>;
+  const naRoda = amigos
+    .filter((amigo) => amigo.status !== "NAO_VAI" && (amigo.status !== "PENDENTE" || amigo.naLista))
+    .sort((a, b) => (ordemStatus[a.status] ?? 3) - (ordemStatus[b.status] ?? 3))
+    .map((amigo) => ({
+      id: amigo.id,
+      nome: amigo.nome,
+      sobrenome: amigo.sobrenome,
+      fotoUrl: amigo.fotoUrl,
+      status: amigo.status,
+    }));
+
+  const valorPorAdulto = rateio.valorPorCota;
+  const acimaDoOrcamento = casa ? casa.valorTotal > viagem.orcamentoMaximo : false;
+  const capacidadeInsuficiente = casa ? casa.capacidade > 0 && casa.capacidade < resumo.confirmados : false;
+  const vagasLivres = Math.max(0, viagem.metaPessoas - resumo.confirmados - resumo.talvez - resumo.pendentes);
+
   const preferencias = datasAtivas.map((data) => ({
     ...data,
     votos: amigos.filter(
@@ -71,45 +106,71 @@ export default async function PaginaInicial() {
     ).length,
   }));
 
-  const valorPorAdulto = rateio.valorPorCota;
-  const acimaDoOrcamento = casa ? casa.valorTotal > viagem.orcamentoMaximo : false;
-  const capacidadeInsuficiente = casa ? casa.capacidade > 0 && casa.capacidade < resumo.confirmados : false;
-
   return (
     <div className="space-y-5">
-      <section className="cartao overflow-hidden p-0">
-        <div className="relative bg-gradient-to-br from-mar-500 via-mar-600 to-oceano-800 px-5 pt-6 pb-8 text-white">
-          <p className="text-[11px] font-semibold tracking-[0.24em] text-mar-100 uppercase">
-            {viagem.destino} · casa inteira com churrasqueira
-          </p>
-          <h1 className="mt-1.5 font-display text-3xl leading-tight sm:text-4xl">{viagem.nome}</h1>
-          {viagem.descricao && (
-            <p className="mt-2 max-w-xl text-sm text-white/85">{viagem.descricao}</p>
-          )}
-          <div className="mt-4 flex flex-wrap gap-2">
-            {datasAtivas.map((data) => (
-              <span
-                key={data.id}
-                className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/25"
-              >
-                {dataCurta(data.inicio)} → {dataCurta(data.fim)} · {pluralizar(data.noites, "noite", "noites")}
+      <section className="overflow-hidden rounded-[2rem] border border-white/50 shadow-[0_28px_70px_-40px_rgba(8,37,46,0.9)]">
+        <FundoPraia prioridade className="px-4 pt-7 pb-6 sm:px-8">
+          <div className="text-center">
+            <p className="text-[11px] font-semibold tracking-[0.24em] text-mar-100 uppercase">
+              {viagem.destino} · casa inteira com churrasqueira
+            </p>
+            <h1 className="mt-1.5 font-display text-3xl leading-tight text-white drop-shadow-[0_3px_12px_rgba(8,37,46,0.55)] sm:text-4xl">
+              {viagem.nome}
+            </h1>
+            {viagem.descricao && (
+              <p className="mx-auto mt-2 max-w-xl text-sm text-white/85">{viagem.descricao}</p>
+            )}
+            <div className="mt-3 flex flex-wrap justify-center gap-2">
+              {datasAtivas.map((data) => (
+                <span
+                  key={data.id}
+                  className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/25 backdrop-blur-sm"
+                >
+                  {dataCurta(data.inicio)} → {dataCurta(data.fim)} · {pluralizar(data.noites, "noite", "noites")}
+                </span>
+              ))}
+              <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/25 backdrop-blur-sm">
+                Regiões: {viagem.regioesPreferidas}
               </span>
-            ))}
-            <span className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white ring-1 ring-white/25">
-              Regiões: {viagem.regioesPreferidas}
-            </span>
+            </div>
           </div>
-          <svg
-            className="absolute inset-x-0 bottom-0 h-6 w-full text-white/90"
-            viewBox="0 0 1200 40"
-            preserveAspectRatio="none"
-            aria-hidden
-          >
-            <path d="M0 26c120-22 240 22 360 0s240-22 360 0 240 22 480 0v14H0z" fill="currentColor" />
-          </svg>
-        </div>
 
-        <div className="space-y-5 px-5 pt-4 pb-5">
+          <div className="mt-5">
+            <RodaAmigos
+              pessoas={naRoda}
+              meta={viagem.metaPessoas}
+              casa={casa ? { nome: casa.nome, regiao: casa.regiao, fotoUrl: casa.fotoUrl } : null}
+              rotuloCasa={ROTULO_CASA[origemCasa]}
+            />
+          </div>
+
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-[11px] font-semibold text-white">
+            <Legenda cor="bg-folha-500">{resumo.confirmados} confirmados</Legenda>
+            {resumo.talvez > 0 && <Legenda cor="bg-sol-300">{resumo.talvez} em talvez</Legenda>}
+            {resumo.pendentes > 0 && <Legenda cor="bg-white/70">{resumo.pendentes} sem resposta</Legenda>}
+            {vagasLivres > 0 && <Legenda cor="bg-white/25">{pluralizar(vagasLivres, "vaga livre", "vagas livres")}</Legenda>}
+          </div>
+
+          <Link
+            href="/casas"
+            className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-2xl bg-oceano-900/45 px-4 py-3 text-center text-sm text-white ring-1 ring-white/25 backdrop-blur-sm transition hover:bg-oceano-900/60"
+          >
+            <span className="font-semibold">
+              {casa ? casa.nome : "Ainda não temos casa escolhida"}
+            </span>
+            <span className="text-white/80">
+              {casa
+                ? `${casa.regiao || "Búzios"} · ${reaisCurto(casa.valorTotal)}${
+                    valorPorAdulto > 0 ? ` · ${reais(valorPorAdulto)} por adulto` : ""
+                  }`
+                : "· toque para ver as candidatas e votar"}
+            </span>
+          </Link>
+
+          <OndaBranca className="-mx-4 -mb-6 mt-6 h-5 text-white/90 sm:-mx-8" />
+        </FundoPraia>
+
+        <div className="space-y-4 bg-white/90 px-5 py-5 backdrop-blur">
           <BarraProgresso
             valor={resumo.confirmados}
             meta={viagem.metaPessoas}
@@ -157,6 +218,72 @@ export default async function PaginaInicial() {
           detalhe={textoPrazo(viagem.prazoConfirmacao)}
         />
       </section>
+
+      {casa && (
+        <section className="cartao overflow-hidden p-0">
+          <div className="flex flex-col sm:flex-row">
+            <div className="relative h-40 w-full shrink-0 sm:h-auto sm:w-56">
+              {casa.fotoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={casa.fotoUrl}
+                  alt={`Foto da ${casa.nome}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-mar-400 via-mar-600 to-oceano-800" />
+              )}
+              <span className="absolute top-3 left-3 selo bg-white/90 text-oceano-800">
+                {ROTULO_CASA[origemCasa]}
+              </span>
+            </div>
+
+            <div className="min-w-0 flex-1 p-5">
+              <h2 className="font-display text-xl leading-snug">{casa.nome}</h2>
+              <p className="mt-0.5 text-sm text-oceano-800/70">{casa.regiao || "Búzios, RJ"}</p>
+
+              <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+                <div className="rounded-xl bg-areia-100/80 px-3 py-2">
+                  <p className="text-[11px] text-oceano-800/60">Hóspedes</p>
+                  <p className="font-semibold text-oceano-900">{casa.capacidade || "?"}</p>
+                </div>
+                <div className="rounded-xl bg-areia-100/80 px-3 py-2">
+                  <p className="text-[11px] text-oceano-800/60">Quartos</p>
+                  <p className="font-semibold text-oceano-900">{casa.quartos || "?"}</p>
+                </div>
+                <div className="rounded-xl bg-areia-100/80 px-3 py-2">
+                  <p className="text-[11px] text-oceano-800/60">Total</p>
+                  <p className="font-semibold text-oceano-900">
+                    {casa.precoAConfirmar ? "a confirmar" : reaisCurto(casa.valorTotal)}
+                  </p>
+                </div>
+                <div className="rounded-xl bg-areia-100/80 px-3 py-2">
+                  <p className="text-[11px] text-oceano-800/60">Por adulto</p>
+                  <p className="font-semibold text-oceano-900">
+                    {valorPorAdulto > 0 ? reaisCurto(valorPorAdulto) : "a calcular"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link href="/casas" className="botao-primario px-4 py-2 text-sm">
+                  {origemCasa === "ESCOLHIDA" ? "Ver detalhes" : "Ver casas e votar"}
+                </Link>
+                {casa.link && (
+                  <a
+                    href={casa.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="botao-suave px-4 py-2 text-sm"
+                  >
+                    Abrir no Airbnb
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="cartao">
         <h2 className="font-display text-xl">Avisos importantes</h2>
@@ -283,11 +410,21 @@ export default async function PaginaInicial() {
             </Link>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {confirmados.slice(0, 18).map((amigo) => (
-              <div key={amigo.id} className="flex w-16 flex-col items-center gap-1 text-center">
-                <Avatar nome={amigo.nome} sobrenome={amigo.sobrenome} fotoUrl={amigo.fotoUrl} tamanho="p" />
-                <span className="w-full truncate text-[11px] text-oceano-800/75">{amigo.nome}</span>
-              </div>
+            {confirmados.map((amigo) => (
+              <Link
+                key={amigo.id}
+                href={`/presenca/${amigo.id}`}
+                className="flex items-center gap-2 rounded-full border border-areia-200 bg-white/80 py-1 pr-3 pl-1 text-sm text-oceano-900 transition hover:border-mar-300 hover:text-mar-700"
+              >
+                <Avatar
+                  nome={amigo.nome}
+                  sobrenome={amigo.sobrenome}
+                  fotoUrl={amigo.fotoUrl}
+                  tamanho="p"
+                  className="h-8 w-8"
+                />
+                <span className="max-w-28 truncate">{primeiroNome(amigo.nome)}</span>
+              </Link>
             ))}
           </div>
         </section>

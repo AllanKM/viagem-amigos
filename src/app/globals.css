@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-corpo), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-titulo), Georgia, serif;
+
+  --color-areia-50: #fffaf3;
+  --color-areia-100: #fdf3e6;
+  --color-areia-200: #f6e7d3;
+  --color-areia-300: #ecd8bb;
+
+  --color-mar-50: #effbfa;
+  --color-mar-100: #d2f3f1;
+  --color-mar-200: #a6e7e4;
+  --color-mar-300: #6fd6d3;
+  --color-mar-400: #33bcbb;
+  --color-mar-500: #12a3a5;
+  --color-mar-600: #0b8489;
+  --color-mar-700: #0b6a70;
+
+  --color-oceano-600: #14606f;
+  --color-oceano-700: #0f4a58;
+  --color-oceano-800: #0c3844;
+  --color-oceano-900: #08252e;
+
+  --color-coral-100: #ffe9e1;
+  --color-coral-200: #ffd0c1;
+  --color-coral-400: #ff9273;
+  --color-coral-500: #f76f4b;
+  --color-coral-600: #dd5533;
+
+  --color-folha-100: #dff5e9;
+  --color-folha-500: #3ea877;
+  --color-folha-600: #2d8a5f;
+
+  --color-sol-100: #fff4d8;
+  --color-sol-300: #ffd98a;
+  --color-sol-500: #f0ac2f;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-areia-50);
+    background-image:
+      radial-gradient(90rem 40rem at 50% -18rem, var(--color-mar-100) 0%, transparent 70%),
+      radial-gradient(60rem 30rem at 100% 0%, var(--color-sol-100) 0%, transparent 60%);
+    background-repeat: no-repeat;
+    color: var(--color-oceano-900);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+@utility cartao {
+  @apply rounded-3xl border border-areia-200 bg-white/85 p-5 shadow-[0_10px_30px_-24px_rgba(8,37,46,0.55)] backdrop-blur-sm;
+}
+
+@utility rotulo {
+  @apply mb-1.5 block text-sm font-medium text-oceano-700;
+}
+
+@utility campo {
+  @apply w-full rounded-2xl border border-areia-300 bg-white px-4 py-3 text-base text-oceano-900 outline-none transition placeholder:text-oceano-900/35 focus:border-mar-400 focus:ring-4 focus:ring-mar-100;
+}
+
+@utility botao {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-base font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@utility botao-primario {
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-mar-600 px-5 py-3 text-base font-semibold text-white shadow-[0_12px_24px_-14px_var(--color-mar-700)] transition hover:bg-mar-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@utility botao-coral {
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-coral-500 px-5 py-3 text-base font-semibold text-white shadow-[0_12px_24px_-14px_var(--color-coral-600)] transition hover:bg-coral-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@utility botao-suave {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-areia-300 bg-white px-5 py-3 text-base font-semibold text-oceano-800 transition hover:border-mar-300 hover:text-mar-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@utility selo {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
+}

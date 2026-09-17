@@ -1,0 +1,163 @@
+// Búzios em Família 2026 — banco local em SQLite
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+/// Configuração geral da viagem. Sempre existe uma única linha (id = 1).
+model Viagem {
+  id                Int      @id @default(1)
+  nome              String   @default("Búzios em Família 2026")
+  destino           String   @default("Búzios, RJ")
+  regioesPreferidas String   @default("Ferradura, Geribá, Manguinhos")
+  descricao         String   @default("")
+  orcamentoMaximo   Float    @default(7000)
+  metaPessoas       Int      @default(24)
+  minPessoas        Int      @default(20)
+  prazoConfirmacao  DateTime
+  prazoVotacao      DateTime
+  rodadaVotacao     Int      @default(1)
+  votacaoAberta     Boolean  @default(true)
+  casaEscolhidaId   String?
+  // Regras de rateio: crianças até idadeIsenta não pagam; até idadeMeia pagam fatorMeia.
+  idadeIsenta       Int      @default(5)
+  idadeMeia         Int      @default(12)
+  fatorMeia         Float    @default(0.5)
+  percentualSinal   Int      @default(30)
+  chavePix          String   @default("")
+  nomeRecebedorPix  String   @default("")
+  avisoGeral        String   @default("")
+  atualizadoEm      DateTime @updatedAt @default(now())
+}
+
+model OpcaoData {
+  id        String   @id @default(cuid())
+  rotulo    String
+  inicio    DateTime
+  fim       DateTime
+  noites    Int
+  ordem     Int      @default(0)
+  ativa     Boolean  @default(true)
+  amigos    Amigo[]
+  casas     Casa[]
+  criadoEm  DateTime @default(now())
+}
+
+model Nucleo {
+  id         String      @id @default(cuid())
+  nome       String      @unique
+  ordem      Int         @default(0)
+  amigos     Amigo[]
+  pagamentos Pagamento[]
+  criadoEm   DateTime    @default(now())
+}
+
+/// Cada pessoa da viagem. Quem está na lista oficial tem `naLista = true` e aparece
+/// na grade de fotos; dependentes cadastrados na hora ficam ligados por `responsavelId`.
+model Amigo {
+  id                String    @id @default(cuid())
+  nome              String
+  sobrenome         String    @default("")
+  fotoUrl           String?
+  whatsapp          String    @default("")
+  nucleo            Nucleo?   @relation(fields: [nucleoId], references: [id], onDelete: SetNull)
+  nucleoId          String?
+  organizador       Boolean   @default(false)
+  naLista           Boolean   @default(true)
+  adulto            Boolean   @default(true)
+  idade             Int?
+  status            String    @default("PENDENTE") // PENDENTE | CONFIRMADO | TALVEZ | NAO_VAI
+  preferenciaData   OpcaoData? @relation(fields: [preferenciaDataId], references: [id], onDelete: SetNull)
+  preferenciaDataId String?
+  observacoes       String    @default("")
+  aceiteCompromisso Boolean   @default(false)
+  respondidoEm      DateTime?
+  ordem             Int       @default(0)
+  responsavel       Amigo?    @relation("Dependentes", fields: [responsavelId], references: [id], onDelete: Cascade)
+  responsavelId     String?
+  dependentes       Amigo[]   @relation("Dependentes")
+  votos             Voto[]
+  criadoEm          DateTime  @default(now())
+  atualizadoEm      DateTime  @updatedAt @default(now())
+
+  @@index([nucleoId])
+  @@index([responsavelId])
+}
+
+model Casa {
+  id               String     @id @default(cuid())
+  nome             String
+  link             String     @default("")
+  fotoUrl          String     @default("")
+  regiao           String     @default("")
+  capacidade       Int        @default(0)
+  quartos          Int        @default(0)
+  camas            Int        @default(0)
+  banheiros        Int        @default(0)
+  piscina          Boolean    @default(false)
+  churrasqueira    Boolean    @default(false)
+  arCondicionado   Boolean    @default(false)
+  estacionamento   Boolean    @default(false)
+  extras           String     @default("") // "Jacuzzi, Sauna, Salão de jogos"
+  distanciaPraia   String     @default("")
+  valorTotal       Float      @default(0)
+  precoAConfirmar  Boolean    @default(false)
+  hospedesCotacao  Int?
+  cotacaoData      OpcaoData? @relation(fields: [cotacaoDataId], references: [id], onDelete: SetNull)
+  cotacaoDataId    String?
+  custosObrigatorios String   @default("") // taxas fora do anúncio: caseiro, luz, água
+  regras           String     @default("")
+  notaAirbnb       Float?
+  avaliacoes       Int?
+  alerta           String     @default("") // observação destacada no cartão
+  indisponivel     Boolean    @default(false)
+  motivoIndisponivel String   @default("")
+  ordem            Int        @default(0)
+  votos            Voto[]
+  criadoEm         DateTime   @default(now())
+  atualizadoEm     DateTime   @updatedAt @default(now())
+}
+
+model Voto {
+  id         String   @id @default(cuid())
+  amigo      Amigo    @relation(fields: [amigoId], references: [id], onDelete: Cascade)
+  amigoId    String
+  casa       Casa     @relation(fields: [casaId], references: [id], onDelete: Cascade)
+  casaId     String
+  rodada     Int      @default(1)
+  comentario String   @default("")
+  criadoEm   DateTime @default(now())
+  atualizadoEm DateTime @updatedAt @default(now())
+
+  @@unique([amigoId, rodada])
+  @@index([casaId])
+}
+
+/// Custos comuns além da casa (limpeza, caseiro, mercado). Transporte fica fora do rateio.
+model CustoExtra {
+  id              String   @id @default(cuid())
+  descricao       String
+  valor           Float    @default(0)
+  incluirNoRateio Boolean  @default(true)
+  ordem           Int      @default(0)
+  criadoEm        DateTime @default(now())
+}
+
+model Pagamento {
+  id         String   @id @default(cuid())
+  nucleo     Nucleo   @relation(fields: [nucleoId], references: [id], onDelete: Cascade)
+  nucleoId   String
+  valor      Float
+  tipo       String   @default("SINAL") // SINAL | SALDO | AJUSTE
+  metodo     String   @default("PIX")
+  pagoEm     DateTime @default(now())
+  observacao String   @default("")
+  criadoEm   DateTime @default(now())
+
+  @@index([nucleoId])
+}
